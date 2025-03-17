@@ -11,8 +11,8 @@ Enhance user experience with a customizable spinner loader, providing smooth and
 == Description ==
 
 Take complete control of your website with the Custom Snippet Loader plugin. Effortlessly manage and load custom snippets on your site with no coding skills required. Streamline the integration of personalized code snippets to enhance your site's functionality, boost performance, and tailor the user experience.Simplify your workflow and ensure smooth updates with a user-friendly interface that saves time and effort—without any technical hassle!
-Key Features:
 
+Key Features:
 * Dynamic Loader Selection: Easily choose from a variety of spinner types, including ring, circle, pulse, image-based, and more.
 * Customizable Styles: Fully customize the look of the spinner with options for size, color, and animation speed to match your website's design.
 * Seamless Integration: Works smoothly with any WordPress theme and WooCommerce setup, ensuring a consistent loading experience across all pages.
