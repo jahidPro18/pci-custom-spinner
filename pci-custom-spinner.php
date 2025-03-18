@@ -59,7 +59,11 @@ function dynamic_loader_enqueue_scripts($hook)
     wp_enqueue_media();
     wp_enqueue_style('wp-color-picker');
     wp_enqueue_script('wp-color-picker');
+    wp_enqueue_style('dynamic-loader-style', plugin_dir_url(__FILE__) . 'assets/css/dynamic-loader.css',array(), '1.0', 'all');
+    wp_enqueue_script('dynamic-loader-script', plugin_dir_url(__FILE__) . 'assets/js/dynamic-loader.js', array('jquery', 'wp-color-picker'), '1.0', true);
     wp_enqueue_script('dynamic-loader-admin', plugins_url('admin.js', __FILE__), array('jquery', 'wp-color-picker'), '1.0', true);
+
+    
 }
 add_action('admin_enqueue_scripts', 'dynamic_loader_enqueue_scripts');
 
@@ -173,208 +177,6 @@ function dynamic_loader_settings_page()
             <?php submit_button('Save Settings'); ?>
         </form>
     </div>
-
-    <style>
-       .dynamic-loader-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .dynamic-loader-options {
-            flex: 1;
-            min-width: 300px;
-        }
-        
-        .dynamic-loader-preview {
-            flex: 1;
-            min-width: 300px;
-            padding: 15px;
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        
-        /* Spinner Types CSS */
-        .spinner-circle {
-            border-radius: 50%;
-            width: 100%;
-            height: 100%;
-            border: 5px solid rgba(255, 255, 255, 0.3);
-            border-top-color: currentColor;
-            animation: spin 1s infinite linear;
-        }
-        
-        .spinner-ring {
-            border-radius: 50%;
-            width: 100%;
-            height: 100%;
-            border: 5px solid currentColor;
-            border-top-color: transparent;
-            animation: spin 1s infinite linear;
-        }
-        
-        .spinner-pulse {
-            width: 100%;
-            height: 100%;
-            background-color: currentColor;
-            border-radius: 50%;
-            animation: pulse 1.2s infinite ease-in-out;
-        }
-        
-        .spinner-dots {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            animation: dots 1.4s infinite ease-in-out;
-        }
-        
-        .spinner-dots:before, .spinner-dots:after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 60%;
-            height: 60%;
-            border-radius: 50%;
-            background-color: currentColor;
-            animation: dots 1.4s infinite ease-in-out;
-        }
-        
-        .spinner-dots:after {
-            top: 40%;
-            left: 40%;
-            animation-delay: 0.7s;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(0); opacity: 0.5; }
-            50% { transform: scale(1); opacity: 1; }
-        }
-        
-        @keyframes dots {
-            0%, 100% { transform: scale(0.2); }
-            50% { transform: scale(1); }
-        }
-    </style>
-
-    <script>
-        jQuery(document).ready(function($) {
-            $('.color-picker').wpColorPicker({
-                change: updatePreview
-            });
-
-            $('#dynamic_loader_type').on('change', function() {
-                if ($(this).val() === 'image') {
-                    $('#image_upload_row').show();
-                    $('#color_row').hide();
-                } else {
-                    $('#image_upload_row').hide();
-                    $('#color_row').show();
-                }
-                updatePreview();
-            });
-
-            $('#upload_image_button').click(function(e) {
-                e.preventDefault();
-                var mediaUploader;
-
-                if (mediaUploader) {
-                    mediaUploader.open();
-                    return;
-                }
-
-                mediaUploader = wp.media({
-                    title: 'Select Loader Image',
-                    button: { text: 'Use this image' },
-                    multiple: false
-                });
-
-                mediaUploader.on('select', function() {
-                    var attachment = mediaUploader.state().get('selection').first().toJSON();
-                    $('#dynamic_loader_image').val(attachment.url);
-                    $('#image_preview').html(wp.template('attachment-preview')({
-                        id: attachment.id,
-                        size: 'thumbnail'
-                    }));
-                    updatePreview();
-                });
-
-                mediaUploader.open();
-            });
-
-            $('#dynamic_loader_bg_opacity').on('input', function() {
-                $('#opacity_value').text($(this).val());
-                updatePreview();
-            });
-
-            $('#dynamic_loader_size').on('input', function() {
-                $('#size_value').text($(this).val() + 'px');
-                updatePreview();
-            });
-
-            $('#test_preview').on('click', function() {
-                $('#preview-loader').fadeOut(300).fadeIn(300);
-            });
-
-            updatePreview();
-
-            function updatePreview() {
-                var type = $('#dynamic_loader_type').val();
-                var image = $('#dynamic_loader_image').val();
-                var color = $('#dynamic_loader_color').val() || '#0073aa';
-                var bgColor = $('#dynamic_loader_bg_color').val() || '#ffffff';
-                var size = $('#dynamic_loader_size').val() + 'px';
-                var opacity = $('#dynamic_loader_bg_opacity').val();
-
-                $('#preview-loader').css({
-                    'background-color': bgColor,
-                    'opacity': opacity
-                });
-
-                $('#preview-loader').empty();
-
-                var spinner;
-
-                switch(type) {
-                    case 'image':
-                        if (image) {
-                            spinner = $('<img>', {
-                                src: image,
-                                css: { 'max-width': size, 'max-height': size }
-                            });
-                        } else {
-                            spinner = $('<div>').text('Please upload an image');
-                        }
-                        break;
-
-                    case 'circle':
-                        spinner = $('<div>', { class: 'spinner-circle', css: { 'width': size, 'height': size, 'color': color } });
-                        break;
-
-                    case 'ring':
-                        spinner = $('<div>', { class: 'spinner-ring', css: { 'width': size, 'height': size, 'color': color } });
-                        break;
-
-                    case 'pulse':
-                        spinner = $('<div>', { class: 'spinner-pulse', css: { 'width': size, 'height': size, 'color': color } });
-                        break;
-
-                    case 'dots':
-                        spinner = $('<div>', { class: 'spinner-dots', css: { 'width': size, 'height': size, 'color': color } });
-                        break;
-                }
-
-                $('#preview-loader').append(spinner);
-            }
-        });
-    </script>
     <?php
 }
 
@@ -383,44 +185,32 @@ function dynamic_loader_settings_page()
  */
 function dynamic_loader_save_settings()
 {
-    // Unsanitize the POST data before checking the nonce
+    
     if (isset($_POST['dynamic_loader_nonce']) && wp_verify_nonce(sanitize_key(wp_unslash($_POST['dynamic_loader_nonce'])), 'dynamic_loader_save_settings')) {
 
-        // $loader_type = sanitize_text_field($_POST['dynamic_loader_type']);
+        
         if (isset($_POST['dynamic_loader_type'])) {
             $loader_type = sanitize_text_field(wp_unslash($_POST['dynamic_loader_type']));
             update_option('dynamic_loader_type', $loader_type);
         }
-
-        // $loader_image = esc_url_raw($_POST['dynamic_loader_image']);
         if (isset($_POST['dynamic_loader_image'])) {
             $loader_image = esc_url_raw(wp_unslash($_POST['dynamic_loader_image']));
             update_option('dynamic_loader_image', $loader_image);
         }
-
-        // $loader_color = sanitize_hex_color($_POST['dynamic_loader_color']);
         if (isset($_POST['dynamic_loader_color'])) {
             $loader_color = sanitize_hex_color(wp_unslash($_POST['dynamic_loader_color']));
             update_option('dynamic_loader_color', $loader_color);
         }
-
-        // $loader_bg_color = sanitize_hex_color($_POST['dynamic_loader_bg_color']);
         if (isset($_POST['dynamic_loader_bg_color'])) {
             $loader_bg_color = sanitize_hex_color(wp_unslash($_POST['dynamic_loader_bg_color']));
             update_option('dynamic_loader_bg_color', $loader_bg_color);
         }
-
-        // $loader_size = absint($_POST['dynamic_loader_size']);
         if (isset($_POST['dynamic_loader_size'])) {
-            $loader_size = absint($_POST['dynamic_loader_size']); // Sanitize as an integer
+            $loader_size = absint($_POST['dynamic_loader_size']);
             update_option('dynamic_loader_size', $loader_size);
         }
-
-        // $loader_bg_opacity = floatval($_POST['dynamic_loader_bg_opacity']);
-        // $loader_bg_opacity = min(max(0, $loader_bg_opacity), 1); // Ensure between 0 and 1
         if (isset($_POST['dynamic_loader_bg_opacity'])) {
-            $loader_bg_opacity = floatval($_POST['dynamic_loader_bg_opacity']); // Sanitize as float
-            // Ensure the opacity is between 0 and 1
+            $loader_bg_opacity = floatval($_POST['dynamic_loader_bg_opacity']);
             $loader_bg_opacity = min(max(0, $loader_bg_opacity), 1);
             update_option('dynamic_loader_bg_opacity', $loader_bg_opacity);
         }
@@ -475,9 +265,8 @@ register_activation_hook(__FILE__, 'dynamic_loader_activate');
  *
  * @since 1.0.0
  */
-function dynamic_loader_override()
-{
-    // Get saved options with defaults.
+
+function dynamic_loader_override() {
     $loader_type = get_option('dynamic_loader_type', 'circle');
     $loader_image = get_option('dynamic_loader_image', '');
     $loader_color = get_option('dynamic_loader_color', '#0073aa');
@@ -485,224 +274,22 @@ function dynamic_loader_override()
     $loader_size = get_option('dynamic_loader_size', '50');
     $loader_bg_opacity = get_option('dynamic_loader_bg_opacity', '0.7');
     
-    // Determine which spinner HTML to use.
-    $spinner_html = '';
-    switch ($loader_type) {
-    case 'image':
-        $attachment_id = attachment_url_to_postid($loader_image);
-        if ($attachment_id) {
-            $spinner_html = wp_get_attachment_image(
-                $attachment_id,
-                'thumbnail',
-                false,
-                array(
-                    'alt' => 'Loading...',
-                    'style' => 'max-width:' . esc_attr($loader_size) . 'px; max-height:' . esc_attr($loader_size) . 'px;'
-                )
-            );
-        } else {
-              $spinner_html = '<div class="spinner-circle" style="width:' . esc_attr($loader_size) . 'px; height:' . esc_attr($loader_size) . 'px; color:' . esc_attr($loader_color) . ';"></div>';
-        }
-        
-        break;
-            
-    case 'circle':
-        $spinner_html = '<div class="spinner-circle" style="width:' . esc_attr($loader_size) . 'px; height:' . esc_attr($loader_size) . 'px; color:' . esc_attr($loader_color) . ';"></div>';
-        break;
-            
-    case 'ring':
-        $spinner_html = '<div class="spinner-ring" style="width:' . esc_attr($loader_size) . 'px; height:' . esc_attr($loader_size) . 'px; color:' . esc_attr($loader_color) . ';"></div>';
-        break;
-            
-    case 'pulse':
-        $spinner_html = '<div class="spinner-pulse" style="width:' . esc_attr($loader_size) . 'px; height:' . esc_attr($loader_size) . 'px; color:' . esc_attr($loader_color) . ';"></div>';
-        break;
-            
-    case 'dots':
-        $spinner_html = '<div class="spinner-dots" style="width:' . esc_attr($loader_size) . 'px; height:' . esc_attr($loader_size) . 'px; color:' . esc_attr($loader_color) . ';"></div>';
-        break;
-    }
+    wp_enqueue_style('override-loader-css', plugin_dir_url(__FILE__) .'assets/css/override.css', array(), '1.0', 'all');
+    wp_enqueue_script('override-loader-js', plugin_dir_url(__FILE__)  . 'assets/js/override.js', array('jquery'), '1.0', true);
+    
+    wp_localize_script('override-loader-js', 'dynamicLoaderVars', array(
+        'loader_color' => $loader_color,
+        'loader_bg_color' => $loader_bg_color,
+        'loader_size' => $loader_size,
+        'loader_bg_opacity' => $loader_bg_opacity,
+        'loader_type' => $loader_type,
+        'loader_image' => $loader_image,
+    ));
+    
     ?>
-    <style>
-        /* Hide WooCommerce default spinners */
-        .blockUI, .blockOverlay, .loading,
-        .wc-block-components-button--loading,
-        .wc-block-components-checkout-place-order-button__text--visually-hidden {
-            display: none !important;
-        }
-        
-        /* Custom dynamic loader */
-        #dynamic-fullscreen-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            visibility: hidden;
-            background-color: <?php echo esc_attr($loader_bg_color); ?>;
-            opacity: <?php echo esc_attr($loader_bg_opacity); ?>;
-        }
-        
-        /* Spinner animations */
-        .spinner-circle {
-            border-radius: 50%;
-            width: <?php echo esc_attr($loader_size); ?>px;
-            height: <?php echo esc_attr($loader_size); ?>px;
-            border: 5px solid rgba(255, 255, 255, 0.3);
-            border-top-color: <?php echo esc_attr($loader_color); ?>;
-            animation: spin 1s infinite linear;
-        }
-        
-        .spinner-ring {
-            border-radius: 50%;
-            width: <?php echo esc_attr($loader_size); ?>px;
-            height: <?php echo esc_attr($loader_size); ?>px;
-            border: 5px solid <?php echo esc_attr($loader_color); ?>;
-            border-top-color: transparent;
-            animation: spin 1s infinite linear;
-        }
-        
-        .spinner-pulse {
-            width: <?php echo esc_attr($loader_size); ?>px;
-            height: <?php echo esc_attr($loader_size); ?>px;
-            background-color: <?php echo esc_attr($loader_color); ?>;
-            border-radius: 50%;
-            animation: pulse 1.2s infinite ease-in-out;
-        }
-        
-        .spinner-dots {
-            width: <?php echo esc_attr($loader_size); ?>px;
-            height: <?php echo esc_attr($loader_size); ?>px;
-            position: relative;
-            animation: dots 1.4s infinite ease-in-out;
-        }
-        
-        .spinner-dots:before, .spinner-dots:after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 60%;
-            height: 60%;
-            border-radius: 50%;
-            background-color: <?php echo esc_attr($loader_color); ?>;
-            animation: dots 1.4s infinite ease-in-out;
-        }
-        
-        .spinner-dots:after {
-            top: 40%;
-            left: 40%;
-            animation-delay: 0.7s;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(0); opacity: 0.5; }
-            50% { transform: scale(1); opacity: 1; }
-        }
-        
-        @keyframes dots {
-            0%, 100% { transform: scale(0.2); }
-            50% { transform: scale(1); }
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            #dynamic-fullscreen-loader img {
-                max-width: <?php echo esc_attr($loader_size * 0.8); ?>px;
-                max-height: <?php echo esc_attr($loader_size * 0.8); ?>px;
-            }
-            
-            .spinner-circle, .spinner-ring, .spinner-pulse, .spinner-dots {
-                width: <?php echo esc_attr($loader_size * 0.8); ?>px;
-                height: <?php echo esc_attr($loader_size * 0.8); ?>px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            #dynamic-fullscreen-loader img {
-                max-width: <?php echo esc_attr($loader_size * 0.6); ?>px;
-                max-height: <?php echo esc_attr($loader_size * 0.6); ?>px;
-            }
-            
-            .spinner-circle, .spinner-ring, .spinner-pulse, .spinner-dots {
-                width: <?php echo esc_attr($loader_size * 0.6); ?>px;
-                height: <?php echo esc_attr($loader_size * 0.6); ?>px;
-            }
-        }
-    </style>
-    
     <div id="dynamic-fullscreen-loader">
-        <?php echo wp_kses_post($spinner_html); ?>
+        <!-- The spinner will be inserted dynamically via JS -->
     </div>
-    
-    <script>
-    
-    jQuery(document).ready(function($) {
-    // Function to show/hide loader.
-    function showDynamicLoader() {
-        $('#dynamic-fullscreen-loader').css('visibility', 'visible');
-    }
-    
-    function hideDynamicLoader() {
-        $('#dynamic-fullscreen-loader').css('visibility', 'hidden');
-    }
-    
-    // Show loader on AJAX start for WooCommerce pages.
-    $(document).on('ajaxStart wc_fragment_refresh wc_cart_button_updated wc_checkout_update_order_review wc_ajax_send', function() {
-        showDynamicLoader();
-    });
-    
-    // Hide loader when AJAX stops.
-    $(document).on('ajaxStop wc_fragments_refreshed updated_checkout', function() {
-        hideDynamicLoader();
-    });
-    
-    // Ensure immediate loader appearance on various WooCommerce buttons.
-    $(document).on('click', 
-       
-        'wc-block-components-panel__content, ' + 
-        'wc-block-components-totals-coupon__content, ' + 
-        'form.wc-block-components-totals-coupon__form, ' +
-        '.wc-block-components-totals-coupon__input-coupon, ' +
-
-        'form.woocommerce-cart-form button, ' + 
-        'form.checkout.woocommerce-checkout button, ' +
-        '.woocommerce-cart-form button[name="apply_coupon"], ' +
-        '.woocommerce-cart-form button[name="update_cart"], ' +
-        '.wc-block-components-button, ' + 
-        '.wp-element-button, ' +
-        '.wc-block-cart__submit-button, ' +
-        '.checkout.woocommerce-checkout button[name="woocommerce_checkout_place_order"], ' +
-        '.wc-block-components-checkout-place-order-button, ' +
-        
-        '.wc-block-checkout__actions_row, ' + 
-        '.wc-block-components-button, ' + 
-        '.wp-element-button, ' +
-        '.wc-block-components-checkout-place-order-button',
-    function() {
-        showDynamicLoader();
-        
-        // Auto-hide after 10 seconds (failsafe).
-        setTimeout(function() {
-            hideDynamicLoader();
-        }, 10000);
-    });
-    
-    // Hide loader when page is completely loaded.
-    $(window).on('load', function() {
-        hideDynamicLoader();
-    });
-});
-    </script>
     <?php
 }
 add_action('wp_head', 'dynamic_loader_override');
